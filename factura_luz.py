@@ -11,8 +11,9 @@ import json
 import requests
 import os
 import datetime
+import argparse
 
-VERSION = '0.5.0.dev'
+VERSION = '0.6.0.dev'
 
 def get_esios(date):
     if (not os.path.exists('.cache/')):
@@ -68,11 +69,19 @@ def get_iva(date):
     return 0.21
     
 
-def parse_csv(file):
-    bono_social = 0.25
+def parse_csv(args):
+    bono_social = 0
+    if (args.bono0 or args.bono1 or args.bono2 or args.bono3):
+        bono_social = 0.4 if args.severo else 0.25
     modo = None # 2.0TD PCB (Peninsula) y CYM (Ceuta y Melilla)
                  # GEN (2.0A, defecto), NOC (2.0DHA, 2 periodos), VHC (2.0DHS, 3 periodos)
-    with open(file) as f:
+    if (args.dha):
+        modo = 'NOC'
+    elif (args.dhs):
+        modo = 'VHC'
+    elif (args.cym):
+        modo = 'CYM'
+    with open(args.file) as f:
         reader = csv.reader(f,delimiter=';')
         next(reader,None)
         dates = set([r[1] for r in reader])
@@ -90,7 +99,7 @@ def parse_csv(file):
         price_kw = 0
         iva = 0
         for date in dates:
-            price_kw = price_kw+get_power_price(date,4.6)
+            price_kw = price_kw+get_power_price(date,pw_punta=float(args.potencia),pw_valle=float(args.valle) if args.valle else None)
             iva = iva+get_iva(date)
         price_kw = round(price_kw,2)
         print('Precio kW:', price_kw)
@@ -110,5 +119,26 @@ def parse_csv(file):
         print('IVA ({}%): {}'.format(int(round(iva*100,0)),iva_valor))
         total_iva = round(total+iva_valor,2)
         print('TOTAL con IVA:',total_iva)
+        
+def main(args):
+    parse_csv(args)
 
-parse_csv('/Downloads/0682o00000LQ57x.csv')
+def parse_args():
+    parser = argparse.ArgumentParser(description='Simulador de la factura de la luz de España según mercado regulado')
+    parser.add_argument('-f', '--file', help='Archivo CSV de los consumos facilitado por la distribuidora', required=True)
+    parser.add_argument('-p', '--potencia', help='Potencia (en kW). En tarificación 2.0TD corresponde a la potencia punta', required=True)
+    parser.add_argument('-v', '--valle', help='Potencia valle (en kW) en tarificación 2.0TD. Si no se especifica se utiliza el valor de potencia punta')
+    parser.add_argument('-c', '--cym', help='Residente de Ceuta y Melilla (para 2.0TD)', action='store_true')
+    parser.add_argument('-d', '--dha', help='Tarificación en 2 periodos (para 2.0DHA)', action='store_true')
+    parser.add_argument('-s', '--dhs', help='Tarificación en 3 periodos (para 2.0DHS)', action='store_true')
+    parser.add_argument('-0', '--bono0', help='Bono social tipo 0 (sin menores / individual)', action='store_true')
+    parser.add_argument('-1', '--bono1', help='Bono social tipo 1 (1 menor / pensionista mínimo)', action='store_true')
+    parser.add_argument('-2', '--bono2', help='Bono social tipo 2 (2 menores)', action='store_true')
+    parser.add_argument('-3', '--bono3', help='Bono social tipo 3 (familia numerosa)', action='store_true')
+    parser.add_argument('-S', '--severo', help='Bono social de consumidor vulnerable severo', action='store_true')
+    args = parser.parse_args()
+    return args
+
+if __name__ == '__main__':
+    args = parse_args()
+    main(args)
