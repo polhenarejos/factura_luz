@@ -12,7 +12,7 @@ import requests
 import os
 import datetime
 
-VERSION = '0.4.2.dev'
+VERSION = '0.4.3.dev'
 
 def get_esios(date):
     if (not os.path.exists('.cache/')):
@@ -43,21 +43,13 @@ def get_price(dates):
 def year_days(year):    
     return datetime.date(year,12,31).timetuple().tm_yday
 
-def get_power_price(date,pw_punta,pw_valle=None):
-    P1 = 31.949
-    P2 = 2.701
-    
-    if (not pw_valle):
+def get_power_price(days,pw_punta,pw_valle=None):
+    P1 = 30.67266
+    P2 = 1.4243591
+    PM = 3.113
+    if (pw_valle is None):
         pw_valle = pw_punta
-    
-    festivos = ['01/01/2021','06/01/2021','02/04/2021','01/05/2021','12/10/2021','01/11/2021','06/12/2021','08/12/2021','25/12/2021']
-    e = date.split('/')
-    d = datetime.date(int(e[2]),int(e[1]),int(e[0])).weekday()
-    days = year_days(int(e[2]))
-    festivo = date in festivos
-    if (d == 5 or d == 6 or festivo):
-        return P2 * pw_valle / days
-    return (P1 * pw_punta * 16 + P2 * pw_valle * 8)/(24 * days)
+    return (pw_punta * P1 + pw_valle * P2 + pw_punta * PM) * days / 365
 
 def get_iva(date):
     e = date.split('/')
@@ -84,17 +76,12 @@ def parse_csv(file):
             price_kwh = price_kwh+price*kwh
         price_kwh = round(price_kwh,2)
         print('Precio kWh:', price_kwh)
-        price_kw = 0
-        iva = 0
-        for date in dates:
-            price_kw = price_kw+get_power_price(date,4.6)    
-            iva = iva+get_iva(date)
-        iva = iva/len(dates)
-        price_kw = round(price_kw,2)
+        
+        price_kw = round(get_power_price(len(dates),4.6),2)
         print('Precio kW:', price_kw)
         descuento_bono = round(bono_social*(price_kw+price_kwh),2)
         if (descuento_bono > 0):
-            print('Descuento bono social:',descuento_bono)
+            print('Descuento bono social:',-descuento_bono)
         subtotal = round(price_kw+price_kwh-descuento_bono,2)
         print('Subtotal:',subtotal)
         imp_ele = round(0.0511269632 * subtotal,2)
@@ -103,6 +90,10 @@ def parse_csv(file):
         print('Alquiler contador:', alq_contador)
         total = subtotal+imp_ele+alq_contador
         print('Total:',total)
+        iva = 0
+        for date in dates: 
+            iva = iva+get_iva(date)
+        iva = iva/len(dates)
         iva_valor = round(iva*total,2)
         print('IVA ({}%): {}'.format(int(round(iva*100,0)),iva_valor))
         total_iva = round(total+iva_valor,2)
