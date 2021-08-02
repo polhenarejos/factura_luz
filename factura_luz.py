@@ -13,7 +13,7 @@ import os
 import datetime
 import argparse
 
-VERSION = '0.6.0.dev'
+VERSION = '0.6.1.dev'
 
 def get_esios(date):
     if (not os.path.exists('.cache/')):
@@ -87,6 +87,7 @@ def parse_csv(args):
         dates = set([r[1] for r in reader])
         prices = get_price(dates, modo)
         price_kwh = 0
+        total_kwh = 0
         f.seek(0)
         next(reader,None)
         for r in reader:
@@ -94,6 +95,7 @@ def parse_csv(args):
             kwh = float(r[3].replace(',','.'))
             price = round(prices[r[1]][hora],6)
             price_kwh = price_kwh+price*kwh
+            total_kwh = total_kwh+kwh
         price_kwh = round(price_kwh,2)
         print('Precio kWh:', price_kwh)
         price_kw = 0
@@ -103,9 +105,21 @@ def parse_csv(args):
             iva = iva+get_iva(date)
         price_kw = round(price_kw,2)
         print('Precio kW:', price_kw)
-        descuento_bono = round(bono_social*(price_kw+price_kwh),2)
-        if (descuento_bono > 0):
-            print('Descuento bono social:',-descuento_bono)
+        if (bono_social > 0):
+            days = len(dates)
+            limite = 1380
+            if (args.bono1):
+                limite = 1932
+            elif (args.bono2):
+                limite = 2346
+            elif (args.bono3):
+                limite = 4140
+            limite = limite*days/365
+            factor = min(1,limite/total_kwh)
+            descuento_bono = round(bono_social*(price_kw+factor*price_kwh),2)
+            if (descuento_bono > 0):
+                print('Descuento bono social:',-descuento_bono)
+                print('Limite de descuento: {}%'.format(round(factor*100,2)))
         subtotal = round(price_kw+price_kwh-descuento_bono,2)
         print('Subtotal:',subtotal)
         imp_ele = round(0.0511269632 * subtotal,2)
