@@ -105,6 +105,7 @@ def parse_csv(args):
             iva = iva+get_iva(date)
         price_kw = round(price_kw,2)
         print('Precio kW:', price_kw)
+        descuento_bono = 0
         if (bono_social > 0):
             days = len(dates)
             limite = 1380
