@@ -12,16 +12,25 @@ import requests
 import os
 import datetime
 import argparse
+import logging
 
-VERSION = '0.6.1.dev'
+VERSION = '0.7.0.dev'
+
+
+logging.basicConfig(format='[%(asctime)s] [%(name)s::%(levelname)s] %(message)s', datefmt='%d/%m/%Y %H:%M:%S')
+logger = logging.getLogger('FacturaLuz')
+logger.setLevel(logging.ERROR)
 
 def get_esios(date):
     if (not os.path.exists('.cache/')):
         os.makedirs('.cache/')
+        logger.info('La carpeta cache no existe. Creando.')
     try:
         with open('.cache/'+date) as f:
+            logger.debug('Usando fecha {} en caché.'.format(date))
             return json.load(f)
     except FileNotFoundError:
+        logger.info('La fecha no está en caché. Descargando los datos para el {}'.format(date))
         r = requests.get('https://api.esios.ree.es/archives/70/download_json?locale=es&date='+date)
         j = r.json()
         with open('.cache/'+date,'w') as f:
@@ -34,17 +43,24 @@ def get_price(dates,mode):
         e = date.split('/')
         if (len(e) == 3):
             _mode = mode
+            istd = datetime.date(int(e[2]),int(e[1]),int(e[0])) >= datetime.date(2021,6,1)
+            if (((_mode == 'GEN' or _mode == 'NOC' or _mode == 'VHC') and istd) or ((_mode == 'PCB' or _mode == 'CYM') and not istd)):
+                logger.error('Modo {} seleccionado pero la tarifa {} es 2.0TD. Seleccionando {} por defecto.'.format(_mode,'no' if not istd else '','PCB' if istd else 'GEN'))
+                _mode = None
             if (not _mode):
-                if (datetime.date(int(e[2]),int(e[1]),int(e[0])) < datetime.date(2021,6,1)):
+                if (not istd):
                     _mode = 'GEN'
                 else:
                     _mode = 'PCB'
+                logger.info('Seleccionando tarifa 2.0{} {} por defecto'.format('A' if _mode == 'GEN' else 'TD',_mode))
             pdate = '{}-{}-{}'.format(e[2],e[1],e[0])
             j = get_esios(pdate).get('PVPC',[])
             prices[date] = {}
             for h in j:
                 hh = h['Hora'].split('-')
                 prices[date].update({str(int(hh[1])): float(h[_mode].replace(',','.'))/1e3})
+        else:
+            logger.error('Fecha {} con formato incorrecto. Error no recuperable.'.format(date))
     return prices
 
 def year_days(year):    
@@ -53,7 +69,9 @@ def year_days(year):
 def get_power_price(date,pw_punta,pw_valle=None):
     e = date.split('/')
     if (datetime.date(int(e[2]),int(e[1]),int(e[0])) < datetime.date(2021,6,1)):
+        logger.debug('Detectada potencia en tarifa 2.0A')
         return (pw_punta * (38.043426+3.113)) / 365
+    logger.debug('Fecha {}: detectada potencia en tarifa 2.0TD'.format(date))
     P1 = 30.67266
     P2 = 1.4243591
     PM = 3.113
@@ -65,7 +83,9 @@ def get_iva(date):
     e = date.split('/')
     d = datetime.date(int(e[2]),int(e[1]),int(e[0]))
     if (datetime.date(2021,6,26) <= d <= datetime.date(2021,12,31)):
+        logger.debug('Fecha {}: detectado IVA del 10%'.format(date))
         return 0.1
+    logger.debug('Fecha {}: detectado IVA del 21%'.format(date))
     return 0.21
     
 
@@ -156,4 +176,5 @@ def parse_args():
 
 if __name__ == '__main__':
     args = parse_args()
+    logger.debug('patata')
     main(args)
