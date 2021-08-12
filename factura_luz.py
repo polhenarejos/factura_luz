@@ -15,7 +15,7 @@ import argparse
 import logging
 import time
 
-VERSION = '0.8.0.dev'
+VERSION = '0.8.1.dev'
 
 
 logging.basicConfig(format='[%(asctime)s] [%(name)s::%(levelname)s] %(message)s', datefmt='%d/%m/%Y %H:%M:%S')
@@ -140,42 +140,42 @@ def parse_csv(args):
             horai = int(hora)
             if (istd(r[1])):
                 if (horai <= 8 or es_valle(r[1])):
-                    P1['kwh'] = P1['kwh']+kwh
-                    P1['price'] = P1['price']+price*kwh
+                    P3['kwh'] = P3['kwh']+kwh
+                    P3['price'] = P3['price']+price*kwh
                 elif ((8 < horai <= 10 and not args.cym) or (8 < horai <= 11 and args.cym)  or (14 < horai <= 18 and not args.cym) or (14 < horai <= 19 and args.cym) or (22 < horai <= 24 and not args.cym) or (23 < horai <= 24 and args.cym)):
                     P2['kwh'] = P2['kwh']+kwh
                     P2['price'] = P2['price']+price*kwh
                 elif ((10 < horai <= 14 and not args.cym) or (11 < horai <= 15 and args.cym) or (18 < horai <= 22 and not args.cym) or (19 < horai <= 23 and args.cym)):
-                    P3['kwh'] = P3['kwh']+kwh
-                    P3['price'] = P3['price']+price*kwh
+                    P1['kwh'] = P1['kwh']+kwh
+                    P1['price'] = P1['price']+price*kwh
             else:
                 if (args.dha):
                     dst = es_dst(r[1])
                     if ((12 < horai <= 22 and not dst) or (13 < horai <= 23 and dst)):
-                        P2['kwh'] = P2['kwh']+kwh
-                        P2['price'] = P2['price']+price*kwh
+                        P1['kwh'] = P1['kwh']+kwh
+                        P1['price'] = P1['price']+price*kwh
                     else:
                         P1['kwh'] = P1['kwh']+kwh
                         P1['price'] = P1['price']+price*kwh
                 elif (args.dhs):
                     if (13 < horai <= 23):
-                        P3['kwh'] = P3['kwh']+kwh
-                        P3['price'] = P3['price']+price*kwh
+                        P1['kwh'] = P1['kwh']+kwh
+                        P1['price'] = P1['price']+price*kwh
                     elif (7 < horai <= 13 or horai > 23 or horai <= 1):
                         P2['kwh'] = P2['kwh']+kwh
                         P2['price'] = P2['price']+price*kwh
                     elif (1 < horai <= 7):
-                        P1['kwh'] = P1['kwh']+kwh
-                        P1['price'] = P1['price']+price*kwh
+                        P3['kwh'] = P3['kwh']+kwh
+                        P3['price'] = P3['price']+price*kwh
                         
         price_kwh = round(price_kwh,2)
         print('Precio kWh:', price_kwh)
         if (P1['kwh'] and P2['kwh'] and P3['kwh']):
-            print('\tConsumos por periodo: P1 (Valle): {} kWh ({}%), P2 (Llano): {} kWh ({}%), P3 (Punta): {} kWh ({}%)'.format(round(P1['kwh'],3),round(P1['kwh']/total_kwh*100,2),round(P2['kwh'],3),round(P2['kwh']/total_kwh*100,2),round(P3['kwh'],3),round(P3['kwh']/total_kwh*100,2)))
-            print('\tPrecios por periodo: P1 (Valle): {} € ({}%), P2 (Llano): {} € ({}%), P3 (Punta): {} € ({}%)'.format(round(P1['price'],2),round(P1['price']/price_kwh*100,2),round(P2['price'],2),round(P2['price']/price_kwh*100,2),round(P3['price'],2),round(P3['price']/price_kwh*100,2)))
+            print('\tConsumos por periodo: P1 (Punta): {} kWh ({}%), P2 (Llano): {} kWh ({}%), P3 (Valle): {} kWh ({}%)'.format(round(P1['kwh'],3),round(P1['kwh']/total_kwh*100,2),round(P2['kwh'],3),round(P2['kwh']/total_kwh*100,2),round(P3['kwh'],3),round(P3['kwh']/total_kwh*100,2)))
+            print('\tPrecios por periodo: P1 (Punta): {} € ({}%), P2 (Llano): {} € ({}%), P3 (Valle): {} € ({}%)'.format(round(P1['price'],2),round(P1['price']/price_kwh*100,2),round(P2['price'],2),round(P2['price']/price_kwh*100,2),round(P3['price'],2),round(P3['price']/price_kwh*100,2)))
         elif (P1['kwh'] and P2['kwh']):
-            print('\tConsumos por periodo: P1 (Valle): {} kWh ({}%), P2 (Punta): {} kWh ({}%)'.format(round(P1['kwh'],3),round(P1['kwh']/total_kwh*100,2),round(P2['kwh'],3),round(P2['kwh']/total_kwh*100,2)))
-            print('\tPrecios por periodo: P1 (Valle): {} € ({}%), P2 (Punta): {} € ({}%)'.format(round(P1['price'],2),round(P1['price']/price_kwh*100,2),round(P2['price'],2),round(P2['price']/price_kwh*100,2)))
+            print('\tConsumos por periodo: P1 (Punta): {} kWh ({}%), P2 (Punta): {} kWh ({}%)'.format(round(P1['kwh'],3),round(P1['kwh']/total_kwh*100,2),round(P2['kwh'],3),round(P2['kwh']/total_kwh*100,2)))
+            print('\tPrecios por periodo: P1 (Punta): {} € ({}%), P2 (Punta): {} € ({}%)'.format(round(P1['price'],2),round(P1['price']/price_kwh*100,2),round(P2['price'],2),round(P2['price']/price_kwh*100,2)))
         else:
             print('\tConsumos por periodo: P1: {} kWh ({}%)'.format(round(P1['kwh'],3),round(P1['kwh']/total_kwh*100,2)))
             print('\tPrecios por periodo: P1: {} € ({}%)'.format(round(P1['price'],2),round(P1['price']/price_kwh*100,2)))
