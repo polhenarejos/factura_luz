@@ -15,7 +15,7 @@ import argparse
 import logging
 import time
 
-VERSION = '0.8.2.dev'
+VERSION = '0.8.3.dev'
 
 
 logging.basicConfig(format='[%(asctime)s] [%(name)s::%(levelname)s] %(message)s', datefmt='%d/%m/%Y %H:%M:%S')
@@ -169,27 +169,27 @@ def parse_csv(args):
                         P3['price'] = P3['price']+price*kwh
                         
         price_kwh = round(price_kwh,2)
-        print('Precio kWh:', price_kwh)
+        print('Importe término variable: {} €'.format(price_kwh))
         print('\tConsumos por periodo: P1: {} kWh ({}%)'.format(round(P1['kwh'],3),round(P1['kwh']/total_kwh*100,2)),end='')
         if (P2['kwh']):
             print(', P2 (Llano): {} kWh ({}%)'.format(round(P2['kwh'],2),round(P2['kwh']/price_kwh*100,2)),end='')
         if (P3['kwh']):
             print(', P3 (Valle): {} kWh ({}%)'.format(round(P3['kwh'],2),round(P3['kwh']/price_kwh*100,2)),end='')
         print('')    
-        print('\tPrecios por periodo: P1 (Punta): {} € ({}%)'.format(round(P1['price'],2),round(P1['price']/price_kwh*100,2)),end='')
+        print('\tImporte término variable por periodo: P1 (Punta): {} € ({}%)'.format(round(P1['price'],2),round(P1['price']/price_kwh*100,2)),end='')
         if (P2['kwh']):
             print(', P2 (Llano): {} € ({}%)'.format(round(P2['price'],2),round(P2['price']/price_kwh*100,2)),end='')
         if (P3['kwh']):
             print(', P3 (Valle): {} € ({}%)'.format(round(P3['price'],2),round(P3['price']/price_kwh*100,2)),end='')
         print('')
-        print('\tTotal consumo: {} kWh'.format(round(total_kwh)))
+        print('\tTotal energía consumida: {} kWh'.format(round(total_kwh)))
         price_kw = 0
         iva = 0
         for date in dates:
             price_kw = price_kw+get_power_price(date,pw_punta=float(args.potencia),pw_valle=float(args.valle) if args.valle else None)
             iva = iva+get_iva(date)
         price_kw = round(price_kw,2)
-        print('Precio kW:', price_kw)
+        print('Importe término fijo: {} €'.format(price_kw))
         descuento_bono = 0
         if (bono_social > 0):
             days = len(dates)
@@ -204,21 +204,21 @@ def parse_csv(args):
             factor = min(1,limite/total_kwh)
             descuento_bono = round(bono_social*(price_kw+factor*price_kwh),2)
             if (descuento_bono > 0):
-                print('Descuento bono social:',-descuento_bono)
+                print('Descuento bono social: {} €'.format(-descuento_bono))
                 print('Limite de descuento: {}%'.format(round(factor*100,2)))
         subtotal = round(price_kw+price_kwh-descuento_bono,2)
-        print('Subtotal:',subtotal)
+        print('Subtotal: {} €'.format(subtotal))
         imp_ele = round(0.0511269632 * subtotal,2)
-        print('Impuesto electricidad:',imp_ele)
+        print('Impuesto eléctrico: {} €'.format(imp_ele))
         alq_contador = round(9.72 * len(dates)/365,2)
-        print('Alquiler contador:', alq_contador)
+        print('Importe alquiler contador: {} €'.format(alq_contador))
         total = round(subtotal+imp_ele+alq_contador,2)
-        print('Total:',total)
+        print('Total: {} €'.format(total))
         iva = iva/len(dates)
         iva_valor = round(iva*total,2)
-        print('IVA ({}%): {}'.format(int(round(iva*100,0)),iva_valor))
+        print('IVA ({}%): {} €'.format(int(round(iva*100,0)),iva_valor))
         total_iva = round(total+iva_valor,2)
-        print('TOTAL con IVA:',total_iva)
+        print('TOTAL con IVA: {} €'.format(total_iva))
         
 def main(args):
     parse_csv(args)
