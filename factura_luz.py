@@ -15,7 +15,7 @@ import argparse
 import logging
 import time
 
-VERSION = '0.9.1.dev'
+VERSION = '0.10.0.dev'
 
 
 logging.basicConfig(format='[%(asctime)s] [%(name)s::%(levelname)s] %(message)s', datefmt='%d/%m/%Y %H:%M:%S')
@@ -75,14 +75,14 @@ def year_days(year):
 def get_power_price(date,pw_punta,pw_valle=None):
     if (not istd(date)):
         logger.debug('Detectada potencia en tarifa 2.0A')
-        return (pw_punta * (38.043426+3.113)) / 365
+        return (pw_punta * (38.043426+3.113)) / 365,pw_punta * 38.043426/ 365,pw_punta * 3.113 / 365
     logger.debug('Fecha {}: detectada potencia en tarifa 2.0TD'.format(date))
     P1 = 30.67266
     P2 = 1.4243591
     PM = 3.113
     if (pw_valle is None):
         pw_valle = pw_punta
-    return (pw_punta * P1 + pw_valle * P2 + pw_punta * PM) / 365
+    return (pw_punta * P1 + pw_valle * P2 + pw_punta * PM) / 365,pw_punta * P1 / 365,pw_valle * P2 / 365,pw_punta * PM / 365
 
 def get_iva(date):
     e = date.split('/')
@@ -179,32 +179,45 @@ def parse_csv(args):
                         P3['price'] = P3['price']+price*kwh
                         
         price_kwh = round(price_kwh,2)
+        price_kw = 0
+        iva = 0
+        PW1,PW2,PWM = 0,0,0
+        for date in dates:
+            power_price = get_power_price(date,pw_punta=float(args.potencia),pw_valle=float(args.valle) if args.valle else None)
+            price_kw = price_kw+power_price[0]
+            PW1 = PW1 + power_price[1]
+            PWM = PWM + power_price[-1]
+            if (len(power_price) == 4):
+                PW2 = PW2 + power_price[2]
+            iva = iva+get_iva(date)
+        price_kw = round(price_kw,2)
+        
         print('Factura Luz',VERSION)
         print('')
         print('Periodo facturable: {} - {}'.format(min(dates),max(dates)))
         print('Días facturables: {} días'.format(len(dates)))
         print('----')
-        print('Importe término variable: {} €'.format(price_kwh))
-        print('\tConsumos por periodo: P1: {} kWh ({}%)'.format(round(P1['kwh'],3),round(P1['kwh']/total_kwh*100,2)),end='')
-        if (P2['kwh']):
-            print(', P2 (Llano): {} kWh ({}%)'.format(round(P2['kwh'],2),round(P2['kwh']/price_kwh*100,2)),end='')
-        if (P3['kwh']):
-            print(', P3 (Valle): {} kWh ({}%)'.format(round(P3['kwh'],2),round(P3['kwh']/price_kwh*100,2)),end='')
-        print('')    
-        print('\tImporte término variable por periodo: P1 (Punta): {} € ({}%)'.format(round(P1['price'],2),round(P1['price']/price_kwh*100,2)),end='')
-        if (P2['kwh']):
-            print(', P2 (Llano): {} € ({}%)'.format(round(P2['price'],2),round(P2['price']/price_kwh*100,2)),end='')
-        if (P3['kwh']):
-            print(', P3 (Valle): {} € ({}%)'.format(round(P3['price'],2),round(P3['price']/price_kwh*100,2)),end='')
-        print('')
-        print('\tTotal energía consumida: {} kWh'.format(round(total_kwh)))
-        price_kw = 0
-        iva = 0
-        for date in dates:
-            price_kw = price_kw+get_power_price(date,pw_punta=float(args.potencia),pw_valle=float(args.valle) if args.valle else None)
-            iva = iva+get_iva(date)
-        price_kw = round(price_kw,2)
         print('Importe término fijo: {} €'.format(price_kw))
+        print('\tImporte peajes, distribución y cargos:')
+        print('\t\tP1 (Punta): {} kW -> {} €'.format(args.potencia,round(PW1,2)))
+        if (PW2):
+            print('\t\tP2 (Valle): {} kW -> {} €'.format(args.valle if args.valle else args.potencia,round(PW2,2)))
+        print('\t\tComercialización: {} €'.format(round(PWM,2)))
+        print('Importe término variable: {} €'.format(price_kwh))
+        print('\tConsumos por periodo:')
+        print('\t\tP1 (Punta): {} kWh ({}%)'.format(round(P1['kwh'],3),round(P1['kwh']/total_kwh*100,2)))
+        if (P2['kwh']):
+            print('\t\tP2 (Llano): {} kWh ({}%)'.format(round(P2['kwh'],2),round(P2['kwh']/price_kwh*100,2)))
+        if (P3['kwh']):
+            print('\t\tP3 (Valle): {} kWh ({}%)'.format(round(P3['kwh'],2),round(P3['kwh']/price_kwh*100,2)))
+
+        print('\tImporte término variable por periodo:')
+        print('\t\tP1 (Punta): {} € ({}%)'.format(round(P1['price'],2),round(P1['price']/price_kwh*100,2)))
+        if (P2['kwh']):
+            print('\t\tP2 (Llano): {} € ({}%)'.format(round(P2['price'],2),round(P2['price']/price_kwh*100,2)))
+        if (P3['kwh']):
+            print('\t\tP3 (Valle): {} € ({}%)'.format(round(P3['price'],2),round(P3['price']/price_kwh*100,2)))
+        print('\tTotal energía consumida: {} kWh'.format(round(total_kwh)))
         descuento_bono = 0
         if (bono_social > 0):
             days = len(dates)
@@ -219,7 +232,7 @@ def parse_csv(args):
             factor = min(1,limite/total_kwh)
             descuento_bono = round(bono_social*(price_kw+factor*price_kwh),2)
             if (descuento_bono > 0):
-                print('Descuento bono social: {} €'.format(-descuento_bono))
+                print('Descuento bono social ({}%): {} €'.format(round(bono_social*100),-descuento_bono))
                 print('\tLimite de descuento: {}%'.format(round(factor*100,2)))
         subtotal = round(price_kw+price_kwh-descuento_bono,2)
         print('Subtotal: {} €'.format(subtotal))
