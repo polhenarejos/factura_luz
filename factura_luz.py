@@ -15,7 +15,7 @@ import argparse
 import logging
 import time
 
-VERSION = '0.8.4.dev'
+VERSION = '0.9.0.dev'
 
 
 logging.basicConfig(format='[%(asctime)s] [%(name)s::%(levelname)s] %(message)s', datefmt='%d/%m/%Y %H:%M:%S')
@@ -96,11 +96,15 @@ def get_iva(date):
 def es_festivo(date):
     festivos = ['1/1/21','6/1/21','2/4/21','1/5/21','12/10/21','1/11/21','6/12/21','8/12/21','25/12/21']
     return date in festivos
-    
-def es_valle(date):
+
+def get_weekday(date):
     e = date.split('/')
     d = datetime.date(int(e[2]),int(e[1]),int(e[0]))
-    return d.weekday() == 5 or d.weekday() == 6 or es_festivo(date)
+    return d.weekday()
+    
+def es_valle(date):
+    d = get_weekday(date)
+    return d == 5 or d == 6 or es_festivo(date)
 
 def es_dst(date):
     e = date.split('/')
@@ -131,6 +135,9 @@ def parse_csv(args):
         P1,P2,P3 = {},{},{}
         P1['kwh'],P2['kwh'],P3['kwh'] = 0,0,0
         P1['price'],P2['price'],P3['price'] = 0,0,0
+        day_consume = {}
+        day_price = {}
+        week_consume = {}
         for r in reader:
             hora = r[2]
             kwh = float(r[3].replace(',','.'))
@@ -138,6 +145,9 @@ def parse_csv(args):
             price_kwh = price_kwh+price*kwh
             total_kwh = total_kwh+kwh
             horai = int(hora)
+            day_consume[r[1]] = day_consume.get(r[1],0) + kwh
+            day_price[r[1]] = day_price.get(r[1],0) + price*kwh
+            week_consume[get_weekday(r[1])] = week_consume.get(get_weekday(r[1]),0) + kwh
             if (istd(r[1])):
                 if (horai <= 8 or es_valle(r[1])):
                     P3['kwh'] = P3['kwh']+kwh
@@ -219,6 +229,19 @@ def parse_csv(args):
         print('IVA ({}%): {} €'.format(int(round(iva*100,0)),iva_valor))
         total_iva = round(total+iva_valor,2)
         print('TOTAL con IVA: {} €'.format(total_iva))
+        if (args.stats):
+            print('')
+            print('Estadísticas de consumo:')
+            print('\tConsumo medio diario: {} kWh'.format(round(total_kwh/len(dates),3)))
+            key2 = max(day_consume, key = lambda k: day_consume[k])
+            print('\tDía de mayor consumo: {} ({} kWh)'.format(key2,round(day_consume[key2],3)))
+            key2 = max(week_consume, key = lambda k: week_consume[k])
+            weekdays = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo']
+            print('\tDía de la semana de mayor consumo: {} ({} kWh)'.format(weekdays[key2],round(week_consume[key2],3)))
+            print('Estadísticas de gasto')
+            print('\tGasto medio diario: {} €'.format(round(total_iva/len(dates),2)))
+            key2 = max(day_price, key = lambda k: day_price[k])
+            print('\tDía de mayor gasto: {} ({} €)'.format(key2,round(day_price[key2],2)))
         
 def main(args):
     parse_csv(args)
@@ -236,10 +259,10 @@ def parse_args():
     parser.add_argument('-2', '--bono2', help='Bono social tipo 2 (2 menores)', action='store_true')
     parser.add_argument('-3', '--bono3', help='Bono social tipo 3 (familia numerosa)', action='store_true')
     parser.add_argument('-S', '--severo', help='Bono social de consumidor vulnerable severo', action='store_true')
+    parser.add_argument('-T', '--stats', help='Muestra estadísticas adicionales de consumo', action='store_true')
     args = parser.parse_args()
     return args
 
 if __name__ == '__main__':
     args = parse_args()
-    logger.debug('patata')
     main(args)
