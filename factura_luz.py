@@ -15,7 +15,7 @@ import argparse
 import logging
 import time
 
-VERSION = '0.9.0.dev'
+VERSION = '0.9.1.dev'
 
 
 logging.basicConfig(format='[%(asctime)s] [%(name)s::%(levelname)s] %(message)s', datefmt='%d/%m/%Y %H:%M:%S')
@@ -179,6 +179,11 @@ def parse_csv(args):
                         P3['price'] = P3['price']+price*kwh
                         
         price_kwh = round(price_kwh,2)
+        print('Factura Luz',VERSION)
+        print('')
+        print('Periodo facturable: {} - {}'.format(min(dates),max(dates)))
+        print('Días facturables: {} días'.format(len(dates)))
+        print('----')
         print('Importe término variable: {} €'.format(price_kwh))
         print('\tConsumos por periodo: P1: {} kWh ({}%)'.format(round(P1['kwh'],3),round(P1['kwh']/total_kwh*100,2)),end='')
         if (P2['kwh']):
@@ -215,13 +220,14 @@ def parse_csv(args):
             descuento_bono = round(bono_social*(price_kw+factor*price_kwh),2)
             if (descuento_bono > 0):
                 print('Descuento bono social: {} €'.format(-descuento_bono))
-                print('Limite de descuento: {}%'.format(round(factor*100,2)))
+                print('\tLimite de descuento: {}%'.format(round(factor*100,2)))
         subtotal = round(price_kw+price_kwh-descuento_bono,2)
         print('Subtotal: {} €'.format(subtotal))
+        print('Otros conceptos:')
         imp_ele = round(0.0511300560 * subtotal,2)
-        print('Impuesto eléctrico: {} €'.format(imp_ele))
+        print('\tImpuesto eléctrico: {} €'.format(imp_ele))
         alq_contador = round(9.72 * len(dates)/365,2)
-        print('Importe alquiler contador: {} €'.format(alq_contador))
+        print('\tImporte alquiler contador: {} €'.format(alq_contador))
         total = round(subtotal+imp_ele+alq_contador,2)
         print('Total: {} €'.format(total))
         iva = iva/len(dates)
@@ -230,7 +236,7 @@ def parse_csv(args):
         total_iva = round(total+iva_valor,2)
         print('TOTAL con IVA: {} €'.format(total_iva))
         if (args.stats):
-            print('')
+            print('----')
             print('Estadísticas de consumo:')
             print('\tConsumo medio diario: {} kWh'.format(round(total_kwh/len(dates),3)))
             key2 = max(day_consume, key = lambda k: day_consume[k])
