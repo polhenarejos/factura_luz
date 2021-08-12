@@ -15,7 +15,7 @@ import argparse
 import logging
 import time
 
-VERSION = '0.8.3.dev'
+VERSION = '0.8.4.dev'
 
 
 logging.basicConfig(format='[%(asctime)s] [%(name)s::%(levelname)s] %(message)s', datefmt='%d/%m/%Y %H:%M:%S')
@@ -208,7 +208,7 @@ def parse_csv(args):
                 print('Limite de descuento: {}%'.format(round(factor*100,2)))
         subtotal = round(price_kw+price_kwh-descuento_bono,2)
         print('Subtotal: {} €'.format(subtotal))
-        imp_ele = round(0.0511269632 * subtotal,2)
+        imp_ele = round(0.0511300560 * subtotal,2)
         print('Impuesto eléctrico: {} €'.format(imp_ele))
         alq_contador = round(9.72 * len(dates)/365,2)
         print('Importe alquiler contador: {} €'.format(alq_contador))
