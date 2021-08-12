@@ -15,7 +15,7 @@ import argparse
 import logging
 import time
 
-VERSION = '0.8.1.dev'
+VERSION = '0.8.2.dev'
 
 
 logging.basicConfig(format='[%(asctime)s] [%(name)s::%(levelname)s] %(message)s', datefmt='%d/%m/%Y %H:%M:%S')
@@ -170,15 +170,18 @@ def parse_csv(args):
                         
         price_kwh = round(price_kwh,2)
         print('Precio kWh:', price_kwh)
-        if (P1['kwh'] and P2['kwh'] and P3['kwh']):
-            print('\tConsumos por periodo: P1 (Punta): {} kWh ({}%), P2 (Llano): {} kWh ({}%), P3 (Valle): {} kWh ({}%)'.format(round(P1['kwh'],3),round(P1['kwh']/total_kwh*100,2),round(P2['kwh'],3),round(P2['kwh']/total_kwh*100,2),round(P3['kwh'],3),round(P3['kwh']/total_kwh*100,2)))
-            print('\tPrecios por periodo: P1 (Punta): {} € ({}%), P2 (Llano): {} € ({}%), P3 (Valle): {} € ({}%)'.format(round(P1['price'],2),round(P1['price']/price_kwh*100,2),round(P2['price'],2),round(P2['price']/price_kwh*100,2),round(P3['price'],2),round(P3['price']/price_kwh*100,2)))
-        elif (P1['kwh'] and P2['kwh']):
-            print('\tConsumos por periodo: P1 (Punta): {} kWh ({}%), P2 (Punta): {} kWh ({}%)'.format(round(P1['kwh'],3),round(P1['kwh']/total_kwh*100,2),round(P2['kwh'],3),round(P2['kwh']/total_kwh*100,2)))
-            print('\tPrecios por periodo: P1 (Punta): {} € ({}%), P2 (Punta): {} € ({}%)'.format(round(P1['price'],2),round(P1['price']/price_kwh*100,2),round(P2['price'],2),round(P2['price']/price_kwh*100,2)))
-        else:
-            print('\tConsumos por periodo: P1: {} kWh ({}%)'.format(round(P1['kwh'],3),round(P1['kwh']/total_kwh*100,2)))
-            print('\tPrecios por periodo: P1: {} € ({}%)'.format(round(P1['price'],2),round(P1['price']/price_kwh*100,2)))
+        print('\tConsumos por periodo: P1: {} kWh ({}%)'.format(round(P1['kwh'],3),round(P1['kwh']/total_kwh*100,2)),end='')
+        if (P2['kwh']):
+            print(', P2 (Llano): {} kWh ({}%)'.format(round(P2['kwh'],2),round(P2['kwh']/price_kwh*100,2)),end='')
+        if (P3['kwh']):
+            print(', P3 (Valle): {} kWh ({}%)'.format(round(P3['kwh'],2),round(P3['kwh']/price_kwh*100,2)),end='')
+        print('')    
+        print('\tPrecios por periodo: P1 (Punta): {} € ({}%)'.format(round(P1['price'],2),round(P1['price']/price_kwh*100,2)),end='')
+        if (P2['kwh']):
+            print(', P2 (Llano): {} € ({}%)'.format(round(P2['price'],2),round(P2['price']/price_kwh*100,2)),end='')
+        if (P3['kwh']):
+            print(', P3 (Valle): {} € ({}%)'.format(round(P3['price'],2),round(P3['price']/price_kwh*100,2)),end='')
+        print('')
         print('\tTotal consumo: {} kWh'.format(round(total_kwh)))
         price_kw = 0
         iva = 0
