@@ -205,7 +205,7 @@ def parse_csv(args):
         print('\t\tComercialización: {} kW -> {} €'.format(args.potencia,round(PWM,2)))
         print('Importe término variable: {} €'.format(price_kwh))
         print('\tConsumos por periodo:')
-        print('\t\tP1 (Punta): {} kWh ({}%)'.format(round(P1['kwh'],3),round(P1['kwh']/total_kwh*100,2)))
+        print('\t\tP1 (Punta): {} kWh ({}%)'.format(round(P1['kwh'],2),round(P1['kwh']/total_kwh*100,2)))
         if (P2['kwh']):
             print('\t\tP2 (Llano): {} kWh ({}%)'.format(round(P2['kwh'],2),round(P2['kwh']/price_kwh*100,2)))
         if (P3['kwh']):
@@ -217,7 +217,7 @@ def parse_csv(args):
             print('\t\tP2 (Llano): {} € ({}%)'.format(round(P2['price'],2),round(P2['price']/price_kwh*100,2)))
         if (P3['kwh']):
             print('\t\tP3 (Valle): {} € ({}%)'.format(round(P3['price'],2),round(P3['price']/price_kwh*100,2)))
-        print('\tTotal energía consumida: {} kWh'.format(round(total_kwh)))
+        print('\tTotal energía consumida: {} kWh'.format(round(total_kwh,2)))
         descuento_bono = 0
         if (bono_social > 0):
             days = len(dates)
