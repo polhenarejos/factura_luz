@@ -15,7 +15,7 @@ import argparse
 import logging
 import time
 
-VERSION = '0.10.2.dev'
+VERSION = '0.10.3.dev'
 
 
 logging.basicConfig(format='[%(asctime)s] [%(name)s::%(levelname)s] %(message)s', datefmt='%d/%m/%Y %H:%M:%S')
@@ -84,10 +84,10 @@ def get_power_price(date,pw_punta,pw_valle=None):
         pw_valle = pw_punta
     return (pw_punta * P1 + pw_valle * P2 + pw_punta * PM) / 365,pw_punta * P1 / 365,pw_valle * P2 / 365,pw_punta * PM / 365
 
-def get_iva(date):
+def get_iva(date,bono):
     e = date.split('/')
     d = datetime.date(int(e[2]),int(e[1]),int(e[0]))
-    if (datetime.date(2021,6,1) <= d <= datetime.date(2021,12,31)):
+    if (datetime.date(2021,6,1) <= d <= datetime.date(2021,12,31) or bono > 0):
         logger.debug('Fecha {}: detectado IVA del 10%'.format(date))
         return 0.1
     logger.debug('Fecha {}: detectado IVA del 21%'.format(date))
@@ -189,7 +189,7 @@ def parse_csv(args):
             PWM = PWM + power_price[-1]
             if (len(power_price) == 4):
                 PW2 = PW2 + power_price[2]
-            iva = iva+get_iva(date)
+            iva = iva+get_iva(date,bono_social)
         price_kw = round(price_kw,2)
         
         print('Factura Luz',VERSION)
