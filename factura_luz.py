@@ -87,7 +87,7 @@ def get_power_price(date,pw_punta,pw_valle=None):
 def get_iva(date):
     e = date.split('/')
     d = datetime.date(int(e[2]),int(e[1]),int(e[0]))
-    if (datetime.date(2021,6,26) <= d <= datetime.date(2021,12,31)):
+    if (datetime.date(2021,6,1) <= d <= datetime.date(2021,12,31)):
         logger.debug('Fecha {}: detectado IVA del 10%'.format(date))
         return 0.1
     logger.debug('Fecha {}: detectado IVA del 21%'.format(date))
