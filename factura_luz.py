@@ -15,7 +15,7 @@ import argparse
 import logging
 import time
 
-VERSION = '0.10.3.dev'
+VERSION = '0.10.4.dev'
 
 
 logging.basicConfig(format='[%(asctime)s] [%(name)s::%(levelname)s] %(message)s', datefmt='%d/%m/%Y %H:%M:%S')
@@ -87,7 +87,7 @@ def get_power_price(date,pw_punta,pw_valle=None):
 def get_iva(date,bono):
     e = date.split('/')
     d = datetime.date(int(e[2]),int(e[1]),int(e[0]))
-    if (datetime.date(2021,6,1) <= d <= datetime.date(2021,12,31) or bono > 0):
+    if ((datetime.date(2021,6,26) <= d) and (d <= datetime.date(2021,12,31) or bono > 0)):
         logger.debug('Fecha {}: detectado IVA del 10%'.format(date))
         return 0.1
     logger.debug('Fecha {}: detectado IVA del 21%'.format(date))
