@@ -15,7 +15,7 @@ import argparse
 import logging
 import time
 
-VERSION = '0.10.4.dev'
+VERSION = '0.10.5.dev'
 
 
 logging.basicConfig(format='[%(asctime)s] [%(name)s::%(levelname)s] %(message)s', datefmt='%d/%m/%Y %H:%M:%S')
@@ -191,10 +191,11 @@ def parse_csv(args):
                 PW2 = PW2 + power_price[2]
             iva = iva+get_iva(date,bono_social)
         price_kw = round(price_kw,2)
+        date_obj = [datetime.date(int(d[2]),int(d[1]),int(d[0])) for d in [(lambda x: x.split('/'))(x) for x in dates ] ]
         
         print('Factura Luz',VERSION)
         print('')
-        print('Periodo facturable: {} - {}'.format(min(dates),max(dates)))
+        print('Periodo facturable: {} - {}'.format(min(date_obj).strftime('%d/%m/%y'),max(date_obj).strftime('%d/%m/%y')))
         print('Días facturables: {} días'.format(len(dates)))
         print('----')
         print('Importe término fijo: {} €'.format(price_kw))
