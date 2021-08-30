@@ -15,7 +15,7 @@ import argparse
 import logging
 import time
 
-VERSION = '0.10.6.dev'
+VERSION = '0.10.7.dev'
 
 
 logging.basicConfig(format='[%(asctime)s] [%(name)s::%(levelname)s] %(message)s', datefmt='%d/%m/%Y %H:%M:%S')
@@ -208,9 +208,9 @@ def parse_csv(args):
         print('\tConsumos por periodo:')
         print('\t\tP1 (Punta): {} kWh ({}%)'.format(round(P1['kwh'],2),round(P1['kwh']/total_kwh*100,2)))
         if (P2['kwh']):
-            print('\t\tP2 (Llano): {} kWh ({}%)'.format(round(P2['kwh'],2),round(P2['kwh']/price_kwh*100,2)))
+            print('\t\tP2 (Llano): {} kWh ({}%)'.format(round(P2['kwh'],2),round(P2['kwh']/total_kwh*100,2)))
         if (P3['kwh']):
-            print('\t\tP3 (Valle): {} kWh ({}%)'.format(round(P3['kwh'],2),round(P3['kwh']/price_kwh*100,2)))
+            print('\t\tP3 (Valle): {} kWh ({}%)'.format(round(P3['kwh'],2),round(P3['kwh']/total_kwh*100,2)))
 
         print('\tImporte término variable por periodo:')
         print('\t\tP1 (Punta): {} € ({}%)'.format(round(P1['price'],2),round(P1['price']/price_kwh*100,2)))
