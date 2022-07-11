@@ -15,12 +15,34 @@ import argparse
 import logging
 import time
 
-VERSION = '0.10.7.dev'
-
+VERSION = '0.11.0.dev'
 
 logging.basicConfig(format='[%(asctime)s] [%(name)s::%(levelname)s] %(message)s', datefmt='%d/%m/%Y %H:%M:%S')
 logger = logging.getLogger('FacturaLuz')
 logger.setLevel(logging.ERROR)
+
+try:
+    with open('config.json') as f:
+        config = json.load(f)
+except FileNotFoundError:
+    config = {
+        'potencia': {
+            'precio_punta': 26.164043,
+            'precio_valle': 1.143132,
+            'margen_comercial': 3.113,
+        },
+        'iva': {
+            'valor': 0.05,
+            'forzar': True,
+        },
+        'impuesto_electricidad': 0.005,
+        'bono_social': {
+            'descuento': 0.6,
+            'descuento_severo': 0.7,
+        },
+        'alquiler_contador': 9.72,
+    }
+        
 
 def get_esios(date):
     if (not os.path.exists('.cache/')):
@@ -77,17 +99,22 @@ def get_power_price(date,pw_punta,pw_valle=None):
         logger.debug('Detectada potencia en tarifa 2.0A')
         return (pw_punta * (38.043426+3.113)) / 365,pw_punta * 38.043426/ 365,pw_punta * 3.113 / 365
     logger.debug('Fecha {}: detectada potencia en tarifa 2.0TD'.format(date))
-    P1 = 30.67266
-    P2 = 1.4243591
-    PM = 3.113
+    P1 = config['potencia']['precio_punta']
+    P2 = config['potencia']['precio_valle']
+    PM = config['potencia']['margen_comercial']
     if (pw_valle is None):
         pw_valle = pw_punta
     return (pw_punta * P1 + pw_valle * P2 + pw_punta * PM) / 365,pw_punta * P1 / 365,pw_valle * P2 / 365,pw_punta * PM / 365
 
 def get_iva(date,bono):
+    if (config['iva']['forzar'] == True):
+        return config['iva']['valor']
     e = date.split('/')
     d = datetime.date(int(e[2]),int(e[1]),int(e[0]))
-    if ((datetime.date(2021,6,5) <= d) and (d <= datetime.date(2021,12,31) or bono > 0)):
+    if ((datetime.date(2022,7,1) <= d) and (d <= datetime.date(2022,12,31) or bono > 0)):
+        logger.debug('Fecha {}: detectado IVA del 5%'.format(date))
+        return 0.05
+    elif ((datetime.date(2021,6,5) <= d) and (d < datetime.date(2022,7,1))):
         logger.debug('Fecha {}: detectado IVA del 10%'.format(date))
         return 0.1
     logger.debug('Fecha {}: detectado IVA del 21%'.format(date))
@@ -114,7 +141,7 @@ def es_dst(date):
 def parse_csv(args):
     bono_social = 0
     if (args.bono0 or args.bono1 or args.bono2 or args.bono3):
-        bono_social = 0.4 if args.severo else 0.25
+        bono_social = config['bono_social']['descuento_severo'] if args.severo else config['bono_social']['descuento']
     modo = None # 2.0TD PCB (Peninsula) y CYM (Ceuta y Melilla)
                  # GEN (2.0A, defecto), NOC (2.0DHA, 2 periodos), VHC (2.0DHS, 3 periodos)
     if (args.dha):
@@ -238,9 +265,9 @@ def parse_csv(args):
         subtotal = round(price_kw+price_kwh-descuento_bono,2)
         print('Subtotal: {} €'.format(subtotal))
         print('Otros conceptos:')
-        imp_ele = round(0.0511300560 * subtotal,2)
+        imp_ele = round(config['impuesto_electricidad'] * subtotal,2)
         print('\tImpuesto eléctrico: {} €'.format(imp_ele))
-        alq_contador = round(9.72 * len(dates)/365,2)
+        alq_contador = round(config['alquiler_contador'] * len(dates)/365,2)
         print('\tImporte alquiler contador: {} €'.format(alq_contador))
         total = round(subtotal+imp_ele+alq_contador,2)
         print('Total: {} €'.format(total))
