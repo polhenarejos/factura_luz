@@ -19,7 +19,7 @@ VERSION = '0.11.0.dev'
 
 logging.basicConfig(format='[%(asctime)s] [%(name)s::%(levelname)s] %(message)s', datefmt='%d/%m/%Y %H:%M:%S')
 logger = logging.getLogger('FacturaLuz')
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.ERROR)
 
 try:
     with open('config.json') as f:
@@ -168,11 +168,12 @@ def parse_csv(args):
         day_consume = {}
         day_price = {}
         week_consume = {}
-        print(prices)
         for r in reader:
             hora = r[2]
-            kwh = float(r[3].replace(',','.'))
-            print(prices[r[1]])
+            try:
+                kwh = float(r[3].replace(',','.'))
+            except ValueError:
+                kwh = 0
             price = round(prices[r[1]][hora],6)
             price_kwh = price_kwh+price*kwh
             total_kwh = total_kwh+kwh
