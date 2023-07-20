@@ -35,7 +35,7 @@ except FileNotFoundError:
             'valor': 0.05,
             'forzar': True,
         },
-        'impuesto_electricidad': 0.005,
+        'impuesto_electricidad': 0.001,
         'bono_social': {
             'descuento': 0.65,
             'descuento_severo': 0.75,
@@ -265,7 +265,7 @@ def parse_csv(args):
         subtotal = round(price_kw+price_kwh-descuento_bono,2)
         print('Subtotal: {} €'.format(subtotal))
         print('Otros conceptos:')
-        imp_ele = round(config['impuesto_electricidad'] * subtotal,2)
+        imp_ele = round(config['impuesto_electricidad'] * total_kwh,2)
         print('\tImpuesto eléctrico: {} €'.format(imp_ele))
         alq_contador = round(config['alquiler_contador'] * len(dates)/365,2)
         print('\tImporte alquiler contador: {} €'.format(alq_contador))
