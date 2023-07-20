@@ -27,8 +27,8 @@ try:
 except FileNotFoundError:
     config = {
         'potencia': {
-            'precio_punta': 26.164043,
-            'precio_valle': 1.143132,
+            'precio_punta': 22.393140+2.989915,
+            'precio_valle': 1.150425+0.192288,
             'margen_comercial': 3.113,
         },
         'iva': {
@@ -37,12 +37,12 @@ except FileNotFoundError:
         },
         'impuesto_electricidad': 0.005,
         'bono_social': {
-            'descuento': 0.6,
-            'descuento_severo': 0.7,
+            'descuento': 0.65,
+            'descuento_severo': 0.75,
         },
         'alquiler_contador': 9.72,
     }
-        
+
 
 def get_esios(date):
     if (not os.path.exists('.cache/')):
@@ -59,7 +59,7 @@ def get_esios(date):
         with open('.cache/'+date,'w') as f:
             json.dump(j,f)
         return j
-    
+
 def istd(date):
     e = date.split('/')
     if (len(e) == 3):
@@ -91,7 +91,7 @@ def get_price(dates,mode):
             logger.error('Fecha {} con formato incorrecto. Error no recuperable.'.format(date))
     return prices
 
-def year_days(year):    
+def year_days(year):
     return datetime.date(year,12,31).timetuple().tm_yday
 
 def get_power_price(date,pw_punta,pw_valle=None):
@@ -128,7 +128,7 @@ def get_weekday(date):
     e = date.split('/')
     d = datetime.date(int(e[2]),int(e[1]),int(e[0]))
     return d.weekday()
-    
+
 def es_valle(date):
     d = get_weekday(date)
     return d == 5 or d == 6 or es_festivo(date)
@@ -204,7 +204,7 @@ def parse_csv(args):
                     elif (1 < horai <= 7):
                         P3['kwh'] = P3['kwh']+kwh
                         P3['price'] = P3['price']+price*kwh
-                        
+
         price_kwh = round(price_kwh,2)
         price_kw = 0
         iva = 0
@@ -219,7 +219,7 @@ def parse_csv(args):
             iva = iva+get_iva(date,bono_social)
         price_kw = round(price_kw,2)
         date_obj = [datetime.date(int(d[2]),int(d[1]),int(d[0])) for d in [(lambda x: x.split('/'))(x) for x in dates ] ]
-        
+
         print('Factura Luz',VERSION)
         print('')
         print('Periodo facturable: {} - {}'.format(min(date_obj).strftime('%d/%m/%y'),max(date_obj).strftime('%d/%m/%y')))
@@ -289,7 +289,7 @@ def parse_csv(args):
             print('\tGasto medio diario: {} €'.format(round(total_iva/len(dates),2)))
             key2 = max(day_price, key = lambda k: day_price[k])
             print('\tDía de mayor gasto: {} ({} €)'.format(key2,round(day_price[key2],2)))
-        
+
 def main(args):
     parse_csv(args)
 
