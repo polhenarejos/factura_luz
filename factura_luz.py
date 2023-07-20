@@ -19,7 +19,7 @@ VERSION = '0.11.0.dev'
 
 logging.basicConfig(format='[%(asctime)s] [%(name)s::%(levelname)s] %(message)s', datefmt='%d/%m/%Y %H:%M:%S')
 logger = logging.getLogger('FacturaLuz')
-logger.setLevel(logging.ERROR)
+logger.setLevel(logging.DEBUG)
 
 try:
     with open('config.json') as f:
@@ -81,7 +81,7 @@ def get_price(dates,mode):
                 else:
                     _mode = 'PCB'
                 logger.info('Seleccionando tarifa 2.0{} {} por defecto'.format('A' if _mode == 'GEN' else 'TD',_mode))
-            pdate = '{}-{}-{}'.format(e[2],e[1],e[0])
+            pdate = '{}-{:02d}-{:02d}'.format(int(e[2])+2000 if int(e[2]) < 2000 else e[2],int(e[1]),int(e[0]))
             j = get_esios(pdate).get('PVPC',[])
             prices[date] = {}
             for h in j:
@@ -168,9 +168,11 @@ def parse_csv(args):
         day_consume = {}
         day_price = {}
         week_consume = {}
+        print(prices)
         for r in reader:
             hora = r[2]
             kwh = float(r[3].replace(',','.'))
+            print(prices[r[1]])
             price = round(prices[r[1]][hora],6)
             price_kwh = price_kwh+price*kwh
             total_kwh = total_kwh+kwh
