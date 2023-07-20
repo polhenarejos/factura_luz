@@ -15,7 +15,7 @@ import argparse
 import logging
 import time
 
-VERSION = '0.11.0.dev'
+VERSION = '0.12.0.dev'
 
 logging.basicConfig(format='[%(asctime)s] [%(name)s::%(levelname)s] %(message)s', datefmt='%d/%m/%Y %H:%M:%S')
 logger = logging.getLogger('FacturaLuz')
