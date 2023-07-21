@@ -186,7 +186,7 @@ def parse_csv(args):
                 if (horai <= 8 or es_valle(r[1])):
                     P3['kwh'] = P3['kwh']+kwh
                     P3['price'] = P3['price']+price*kwh
-                elif ((8 < horai <= 10 and not args.cym) or (8 < horai <= 11 and args.cym)  or (14 < horai <= 18 and not args.cym) or (14 < horai <= 19 and args.cym) or (22 < horai <= 24 and not args.cym) or (23 < horai <= 24 and args.cym)):
+                elif ((8 < horai <= 10 and not args.cym) or (8 < horai <= 11 and args.cym)  or (14 < horai <= 18 and not args.cym) or (15 < horai <= 19 and args.cym) or (22 < horai <= 24 and not args.cym) or (23 < horai <= 24 and args.cym)):
                     P2['kwh'] = P2['kwh']+kwh
                     P2['price'] = P2['price']+price*kwh
                 elif ((10 < horai <= 14 and not args.cym) or (11 < horai <= 15 and args.cym) or (18 < horai <= 22 and not args.cym) or (19 < horai <= 23 and args.cym)):
