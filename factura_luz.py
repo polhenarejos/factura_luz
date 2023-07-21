@@ -41,6 +41,7 @@ except FileNotFoundError:
             'descuento_severo': 0.75,
         },
         'alquiler_contador': 9.72,
+        'repercusion_pvpc': 1.791619 * 14.035934 / 365,
     }
 
 
@@ -224,6 +225,7 @@ def parse_csv(args):
                 PW2 = PW2 + power_price[2]
             iva = iva+get_iva(date,bono_social)
         price_kw = round(price_kw,2)
+        total_kwh = round(total_kwh,0)
         date_obj = [datetime.date(int(d[2]),int(d[1]),int(d[0])) for d in [(lambda x: x.split('/'))(x) for x in dates ] ]
 
         print('Factura Luz',VERSION)
@@ -251,7 +253,9 @@ def parse_csv(args):
             print('\t\tP2 (Llano): {} € ({}%)'.format(round(P2['price'],2),round(P2['price']/price_kwh*100,2)))
         if (P3['kwh']):
             print('\t\tP3 (Valle): {} € ({}%)'.format(round(P3['price'],2),round(P3['price']/price_kwh*100,2)))
-        print('\tTotal energía consumida: {} kWh'.format(round(total_kwh,2)))
+        print('\tTotal energía consumida: {} kWh'.format(total_kwh))
+        rep_pvpc = round(config['repercusion_pvpc'] * len(dates), 2)
+        print('\tRepercusión del bono social: {} €'.format(rep_pvpc))
         descuento_bono = 0
         if (bono_social > 0):
             days = len(dates)
@@ -264,18 +268,18 @@ def parse_csv(args):
                 limite = 4140
             limite = limite*days/365
             factor = min(1,limite/total_kwh)
-            descuento_bono = round(bono_social*(price_kw+factor*price_kwh),2)
+            descuento_bono = round(bono_social*(price_kw+factor*(price_kwh+rep_pvpc)),2)
             if (descuento_bono > 0):
                 print('Descuento bono social ({}%): {} €'.format(round(bono_social*100),-descuento_bono))
                 print('\tLimite de descuento: {}%'.format(round(factor*100,2)))
-        subtotal = round(price_kw+price_kwh-descuento_bono,2)
+        subtotal = price_kw+price_kwh-descuento_bono
         print('Subtotal: {} €'.format(subtotal))
         print('Otros conceptos:')
         imp_ele = round(config['impuesto_electricidad'] * total_kwh,2)
         print('\tImpuesto eléctrico: {} €'.format(imp_ele))
         alq_contador = round(config['alquiler_contador'] * len(dates)/365,2)
         print('\tImporte alquiler contador: {} €'.format(alq_contador))
-        total = round(subtotal+imp_ele+alq_contador,2)
+        total = subtotal+imp_ele+alq_contador+rep_pvpc
         print('Total: {} €'.format(total))
         iva = iva/len(dates)
         iva_valor = round(iva*total,2)
